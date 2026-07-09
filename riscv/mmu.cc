@@ -315,7 +315,7 @@ void mmu_t::load_slow_path(reg_t original_addr, std::size_t len,
       throw trap_load_address_misaligned(gva, transformed_addr, 0, 0);
 
     if (access_info.flags.lr)
-      throw trap_load_access_fault(gva, transformed_addr, 0, 0);
+      throw trap_load_address_misaligned(gva, transformed_addr, 0, 0);
 
     reg_t len_page0 = std::min<reg_t>(len, PGSIZE - transformed_addr % PGSIZE);
     load_slow_path_intrapage(len_page0, bytes, access_info);
@@ -410,7 +410,7 @@ void mmu_t::store_slow_path(reg_t original_addr, std::size_t len,
       throw trap_store_address_misaligned(gva, transformed_addr, 0, 0);
 
     if (require_alignment)
-      throw trap_store_access_fault(gva, transformed_addr, 0, 0);
+      throw trap_store_address_misaligned(gva, transformed_addr, 0, 0);
 
     reg_t len_page0 = std::min<reg_t>(len, PGSIZE - transformed_addr % PGSIZE);
     store_slow_path_intrapage(len_page0, bytes, access_info, actually_store);
