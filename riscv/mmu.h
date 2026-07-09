@@ -229,8 +229,18 @@ public:
 
     auto base = transformed_addr & ~(blocksz - 1);
     check_triggers(triggers::OPERATION_STORE, base, false, blocksz);
-    for (size_t offset = 0; offset < blocksz; offset += 1)
-      store<uint8_t>(base + offset, 0);
+    // Per Zicbom spec, mtval must contain the rs1 virtual address on fault.
+    // The store loop starts at the cache-block-aligned base, so any exception
+    // it raises would carry the base address in tval. Catch and rethrow with
+    // the original rs1 address (transformed_addr) to match the spec.
+    try {
+      for (size_t offset = 0; offset < blocksz; offset += 1)
+        store<uint8_t>(base + offset, 0);
+    } catch (trap_store_access_fault& t) {
+      throw trap_store_access_fault(t.has_gva(), transformed_addr, t.get_tval2(), t.get_tinst());
+    } catch (trap_store_page_fault& t) {
+      throw trap_store_page_fault(t.has_gva(), transformed_addr, t.get_tval2(), t.get_tinst());
+    }
   }
 
   void clean_inval(reg_t addr, bool clean, bool inval) {
