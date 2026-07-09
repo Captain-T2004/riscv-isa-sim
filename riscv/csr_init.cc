@@ -344,7 +344,10 @@ void state_t::csr_init(processor_t* const proc, reg_t max_isa)
   add_csr(CSR_MVENDORID, std::make_shared<const_csr_t>(proc, CSR_MVENDORID, 0));
   add_csr(CSR_MHARTID, std::make_shared<const_csr_t>(proc, CSR_MHARTID, proc->get_id()));
   add_csr(CSR_MCONFIGPTR, std::make_shared<const_csr_t>(proc, CSR_MCONFIGPTR, 0));
-  const reg_t senvcfg_mask = (proc->extension_enabled(EXT_ZICBOM) ? SENVCFG_CBCFE | SENVCFG_CBIE : 0) |
+  // FIOM (bit 0) is a baseline feature required when U-mode is present (priv spec §3.1.6.4).
+  // It is not gated by any separate ISA extension, so always include it in senvcfg.
+  const reg_t senvcfg_mask = SENVCFG_FIOM |
+                            (proc->extension_enabled(EXT_ZICBOM) ? SENVCFG_CBCFE | SENVCFG_CBIE : 0) |
                             (proc->extension_enabled(EXT_ZICBOZ) ? SENVCFG_CBZE : 0) |
                             (proc->extension_enabled(EXT_SVUKTE) ? SENVCFG_UKTE : 0) |
                             (proc->extension_enabled(EXT_SSNPM) ? SENVCFG_PMM : 0) |
